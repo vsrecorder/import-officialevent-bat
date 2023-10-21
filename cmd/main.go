@@ -5,13 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 	"time"
 
 	"github.com/joho/godotenv"
+	"github.com/vsrecorder/import-officialevent-bat/infrastructures"
 	"github.com/vsrecorder/import-officialevent-bat/model"
-	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
 
@@ -84,16 +85,15 @@ func main() {
 		panic("Error loading .env file")
 	}
 
-	userName := os.Getenv("USER_NAME")
-	password := os.Getenv("PASSWORD")
+	userName := os.Getenv("DB_USER_NAME")
+	password := os.Getenv("DB_PASSWORD")
+	dbHostname := os.Getenv("DB_HOSTNAME")
+	dbPort := os.Getenv("DB_PORT")
 	dbName := os.Getenv("DB_NAME")
-	mysqlHostname := os.Getenv("MYSQL_HOSTNAME")
 
-	// DB接続
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:3306)/%s?charset=utf8mb4&parseTime=True&loc=Local", userName, password, mysqlHostname, dbName)
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	db, err := infrastructures.NewMySQL(userName, password, dbHostname, dbPort, dbName)
 	if err != nil {
-		panic("failed to connect database")
+		log.Fatalf("failed to connect database: %v", err)
 	}
 
 	// 公式イベントデータを読み込む
@@ -119,6 +119,7 @@ func main() {
 		if err != nil {
 			panic(err)
 		}
+
 	}
 
 	for _, event := range events {
