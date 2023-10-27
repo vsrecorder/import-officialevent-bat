@@ -1,4 +1,4 @@
-package model
+package models
 
 type EventSearch struct {
 	Code       uint16  `json:"code"`

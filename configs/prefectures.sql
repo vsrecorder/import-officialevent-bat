@@ -1,9 +1,7 @@
-
 CREATE TABLE prefectures (
-    id        TINYINT(2) UNSIGNED NOT NULL, 
+    id        TINYINT(2) UNSIGNED NOT NULL PRIMARY KEY,
     name      VARCHAR(255) DEFAULT NULL,
-    name_kana VARCHAR(255) DEFAULT NULL,
-    PRIMARY KEY (`id`)
+    name_kana VARCHAR(255) DEFAULT NULL
 );
 
 INSERT INTO prefectures VALUES
@@ -55,43 +53,3 @@ INSERT INTO prefectures VALUES
   (45,'宮崎県','ミヤザキケン'),
   (46,'鹿児島県','カゴシマケン'),
   (47,'沖縄県','オキナワケン');
-
-
-
-CREATE TABLE shops (
-    id             INT UNSIGNED NOT NULL PRIMARY KEY,
-    name           VARCHAR(255) NOT NULL,
-    term           TINYINT UNSIGNED NOT NULL,
-    zip_code       VARCHAR(8) DEFAULT NULL,
-    prefecture_id  TINYINT(2) UNSIGNED NOT NULL,
-    address        VARCHAR(255) DEFAULT NULL,
-    tel            VARCHAR(32) DEFAULT NULL,
-    access         TEXT DEFAULT NULL,
-    business_hours VARCHAR(255) DEFAULT NULL,
-    url            VARCHAR(255) DEFAULT NULL,
-    geo_coding      VARCHAR(63) DEFAULT NULL,
-    FOREIGN KEY (`prefecture_id`) REFERENCES prefectures (`id`)
-);
-
-CREATE TABLE official_events (
-    id                 INT UNSIGNED NOT NULL PRIMARY KEY,
-    name               VARCHAR(255) NOT NULL,
-    address            VARCHAR(255) NOT NULL,
-    date               DATE NOT NULL,
-    started_at         DATETIME DEFAULT NULL,
-    ended_at           DATETIME DEFAULT NULL,
-    deck_count         VARCHAR(255) DEFAULT NULL,
-    type               TINYINT UNSIGNED DEFAULT NULL,
-    csp_flg            TINYINT(2) UNSIGNED DEFAULT NULL,
-    league             SMALLINT UNSIGNED DEFAULT NULL,
-    league_name        VARCHAR(255) DEFAULT NULL,
-    regulation         VARCHAR(255) DEFAULT NULL,
-    entry_fee          VARCHAR(255) DEFAULT NULL,
-    capacity           SMALLINT UNSIGNED DEFAULT NULL,
-    attr_id            TINYINT UNSIGNED DEFAULT NULL,
-    trainers_flg       TINYINT UNSIGNED DEFAULT NULL,
-    holiday_flg        TINYINT(2) UNSIGNED DEFAULT NULL,
-    date_id            INT UNSIGNED NOT NULL,
-    shop_id            INT UNSIGNED NOT NULL,
-    FOREIGN KEY (`shop_id`) REFERENCES shops (`id`)
-);

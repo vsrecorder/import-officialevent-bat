@@ -1,4 +1,4 @@
-package model
+package models
 
 type ShopSearch struct {
 	Code uint16 `json:"code"`

@@ -1,4 +1,4 @@
-package model
+package models
 
 type Event struct {
 	DateId         uint   `json:"date_id"`
@@ -11,16 +11,16 @@ type Event struct {
 	Address        string `json:"address"`
 	EventTitle     string `json:"event_title"`
 	EventHoldingId uint   `json:"event_holding_id"`
-	EventType      uint8  `json:"event_type"`
+	EventType      uint   `json:"event_type"`
 	CSPFlg         uint8  `json:"csp_flg"`
-	EventLeague    uint16 `json:"event_league"`
+	EventLeague    uint   `json:"event_league"`
 	Regulation     string `json:"regulation"`
 	EntryFee       string `json:"entry_fee"`
-	Capacity       uint16 `json:"capacity"`
+	Capacity       uint   `json:"capacity"`
 	ShopName       string `json:"shop_name"`
-	ShopTerm       uint8  `json:"shop_term"`
+	ShopTerm       uint   `json:"shop_term"`
 	LeagueName     string `json:"leagueName"`
-	EventAttrId    uint8  `json:"event_attr_id"`
+	EventAttrId    uint   `json:"event_attr_id"`
 	TrainersFlg    uint8  `json:"trainers_flg"`
 	HolidayFlg     uint8  `json:"holiday_flg"`
 }
