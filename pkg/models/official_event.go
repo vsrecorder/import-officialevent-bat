@@ -11,7 +11,7 @@ type OfficialEvent struct {
 	StartedAt       time.Time `json:"started_at"`
 	EndedAt         time.Time `json:"ended_at"`
 	DeckCount       string    `json:"deck_count"`
-	TypeId          uint      `json:"type_dd"`
+	TypeId          uint      `json:"type_id"`
 	TypeName        string    `json:"type_name"`
 	CSPFlg          bool      `json:"csp_flg"`
 	LeagueId        uint      `json:"league_id"`
