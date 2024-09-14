@@ -3,6 +3,7 @@ package models
 type EventDetail struct {
 	Id              uint            `json:"id"`
 	Title           string          `json:"eventTitle"`
+	OrgTitle        string          `json:"orgEventTitle"`
 	Address         string          `json:"address"`
 	Venue           string          `json:"venue"`
 	Date            EventDetailDate `json:"eventDate"`

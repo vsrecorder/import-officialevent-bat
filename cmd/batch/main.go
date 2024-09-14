@@ -18,62 +18,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// 公式イベントの数を取得
-func getEventCount(t time.Time) (uint16, error) {
-	year := uint16(t.Year())
-	month := uint8(t.Month())
-	day := uint8(t.Day())
-
-	var eventCount uint16
-
-	res, err := http.Get(fmt.Sprintf("https://players.pokemon-card.com/event_search/count?start_date=%d/%d/%d&end_date=%d/%d/%d", year, month, day, year, month, day))
-	if err != nil {
-		return 0, err
-	}
-	defer res.Body.Close()
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return 0, err
-	}
-
-	var eventCountSearch models.EventCountSearch
-	if err := json.Unmarshal(body, &eventCountSearch); err != nil {
-		return 0, err
-	}
-
-	eventCount = uint16(eventCountSearch.Count)
-
-	return eventCount, err
-}
-
-// 公式イベントデータを取得
-func getEvent(t time.Time) ([]models.Event, error) {
-	year := uint16(t.Year())
-	month := uint8(t.Month())
-	day := uint8(t.Day())
-	eventCount, err := getEventCount(t)
-	if err != nil {
-		return nil, err
-	}
-
-	res, err := http.Get(fmt.Sprintf("https://players.pokemon-card.com/event_search?start_date=%d/%d/%d&end_date=%d/%d/%d&limit=%d", year, month, day, year, month, day, eventCount))
-	if err != nil {
-		return nil, err
-	}
-	defer res.Body.Close()
-	body, err := io.ReadAll(res.Body)
-	if err != nil {
-		return nil, err
-	}
-
-	var eventSearch models.EventSearch
-	if err := json.Unmarshal(body, &eventSearch); err != nil {
-		return nil, err
-	}
-
-	return eventSearch.Event, nil
-}
-
 func stringToTime(str string) time.Time {
 	var layout = "2006-01-02 15:04:00.000000"
 
@@ -107,7 +51,7 @@ func main() {
 	}
 
 	// 公式イベントをDBに登録する
-	for id := 100000; id < 300000; id++ {
+	for id := 0; id <= 505550; id++ {
 		// 公式イベントの詳細情報の取得
 		res, err := http.Get(fmt.Sprintf("https://players.pokemon-card.com/event_detail_search?event_holding_id=%d", id))
 		if err != nil {
@@ -132,21 +76,21 @@ func main() {
 
 		fmt.Println("event_holding_id:", eventDetail.Id)
 
-		//	ショップが既にDBに存在するか確認
+		// ショップが既にDBに存在するか確認
 		// ショップがDBに存在しない場合、DBに登録する
 		{
 			if result := db.Where(&models.Shop{Id: eventDetail.ShopId}).First(&models.Shop{}); errors.Is(result.Error, gorm.ErrRecordNotFound) {
 				fmt.Println("shop_id:", eventDetail.ShopId)
+
 				// ショップ情報の取得
 				// ↓の返り値のshopIdとtermが数値だったり、文字列だったりしているから気をつける
-				t := time.Now()
-				year := strconv.Itoa(t.Year())
-				month := strconv.Itoa(int(t.Month()))
+				now := time.Now()
 
-				res, err := http.Get(fmt.Sprintf("https://players.pokemon-card.com/shop?shop_id=%d&targetMonth=%s", eventDetail.ShopId, year+month))
+				res, err := http.Get(fmt.Sprintf("https://players.pokemon-card.com/shop?shop_id=%d&targetMonth=%s", eventDetail.ShopId, fmt.Sprintf("%d%02d", now.Year(), now.Month())))
 				if err != nil {
 					panic(err)
 				}
+
 				defer res.Body.Close()
 				body, err := io.ReadAll(res.Body)
 				if err != nil {
@@ -157,6 +101,8 @@ func main() {
 				if err := json.Unmarshal(body, &shopSearch); err != nil {
 					panic(err)
 				}
+
+				// ショップの県名を取得
 				var pref models.Prefectures
 				db.Where("name = ?", shopSearch.Shop.PrefectureName).First(&pref)
 
@@ -164,7 +110,6 @@ func main() {
 					var shop daos.Shop
 
 					shop.Id = eventDetail.ShopId
-
 					shop.Name = shopSearch.Shop.Name
 					shop.ZipCode = shopSearch.Shop.ZipCode
 					shop.PrefectureId = pref.Id
@@ -175,6 +120,7 @@ func main() {
 					shop.Url = shopSearch.Shop.Url
 					shop.GeoCoding = shopSearch.Shop.GeoCoding
 
+					// 返り値のshopIdとtermが数値だったり、文字列だったりしているから処理する
 					var shopTermStringSearch models.ShopTermStringSearch
 					if err := json.Unmarshal(body, &shopTermStringSearch); err != nil {
 						var shopTermUintSearch models.ShopTermUintSearch
@@ -195,7 +141,14 @@ func main() {
 
 		var officialEvent daos.OfficialEvent
 		officialEvent.Id = eventDetail.Id
-		officialEvent.Title = eventDetail.Title
+
+		// オーガナイザーイベントの場合
+		if eventDetail.TypeId == 6 {
+			officialEvent.Title = eventDetail.OrgTitle
+		} else {
+			officialEvent.Title = eventDetail.Title
+		}
+
 		officialEvent.Address = eventDetail.Address
 		officialEvent.Venue = eventDetail.Venue
 

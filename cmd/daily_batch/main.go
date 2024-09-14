@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/joho/godotenv"
@@ -25,7 +26,7 @@ func getEventCount(t time.Time) (uint16, error) {
 
 	var eventCount uint16
 
-	res, err := http.Get(fmt.Sprintf("https://players.pokemon-card.com/event_search/count?start_date=%d/%d/%d&end_date=%d/%d/%d", year, month, day, year, month, day))
+	res, err := http.Get(fmt.Sprintf("https://players.pokemon-card.com/event_search/count?start_date=%d/%02d/%02d&end_date=%d/%02d/%02d", year, month, day, year, month, day))
 	if err != nil {
 		return 0, err
 	}
@@ -55,7 +56,7 @@ func getEvent(t time.Time) ([]models.Event, error) {
 		return nil, err
 	}
 
-	res, err := http.Get(fmt.Sprintf("https://players.pokemon-card.com/event_search?start_date=%d/%d/%d&end_date=%d/%d/%d&limit=%d", year, month, day, year, month, day, eventCount))
+	res, err := http.Get(fmt.Sprintf("https://players.pokemon-card.com/event_search?start_date=%d/%02d/%02d&end_date=%d/%02d/%02d&limit=%d", year, month, day, year, month, day, eventCount))
 	if err != nil {
 		return nil, err
 	}
@@ -139,9 +140,9 @@ func main() {
 
 			{
 				var shop daos.Shop
+
 				shop.Id = event.ShopId
 				shop.Name = shopSearch.Shop.Name
-				shop.Term = event.ShopTerm
 				shop.ZipCode = shopSearch.Shop.ZipCode
 				shop.PrefectureId = pref.Id
 				shop.Address = shopSearch.Shop.Address
@@ -150,6 +151,20 @@ func main() {
 				shop.BusinessHours = shopSearch.Shop.BusinessHours
 				shop.Url = shopSearch.Shop.Url
 				shop.GeoCoding = shopSearch.Shop.GeoCoding
+
+				// 返り値のshopIdとtermが数値だったり、文字列だったりしているから処理する
+				var shopTermStringSearch models.ShopTermStringSearch
+				if err := json.Unmarshal(body, &shopTermStringSearch); err != nil {
+					var shopTermUintSearch models.ShopTermUintSearch
+					if err := json.Unmarshal(body, &shopTermUintSearch); err != nil {
+						panic(err)
+					} else {
+						shop.Term = shopTermUintSearch.ShopTermUint.Term
+					}
+				} else {
+					i, _ := strconv.Atoi(shopTermStringSearch.ShopTermString.Term)
+					shop.Term = uint(i)
+				}
 
 				db.Create(&shop)
 			}
@@ -177,7 +192,14 @@ func main() {
 
 			var officialEvent daos.OfficialEvent
 			officialEvent.Id = eventDetail.Id
-			officialEvent.Title = eventDetail.Title
+
+			// オーガナイザーイベントの場合
+			if eventDetail.TypeId == 6 {
+				officialEvent.Title = eventDetail.OrgTitle
+			} else {
+				officialEvent.Title = eventDetail.Title
+			}
+
 			officialEvent.Address = eventDetail.Address
 			officialEvent.Venue = eventDetail.Venue
 
