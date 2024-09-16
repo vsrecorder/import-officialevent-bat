@@ -13,14 +13,9 @@ CREATE TABLE shops (
     FOREIGN KEY (`prefecture_id`) REFERENCES prefectures (`id`)
 );
 
-
-
-
-
-
 INSERT INTO shops VALUES(
     0,
-    "なぞの場所",
+    "株式会社ポケモン",
     0,
     NULL,
     0,
