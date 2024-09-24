@@ -4,6 +4,17 @@ CREATE TABLE prefectures (
     name_kana VARCHAR(255) DEFAULT NULL
 );
 
+
+
+CREATE TABLE prefectures (
+    id        SMALLINT NOT NULL PRIMARY KEY,
+    name      VARCHAR(255) DEFAULT NULL,
+    name_kana VARCHAR(255) DEFAULT NULL
+);
+
+
+
+
 INSERT INTO prefectures VALUES
   (0,'不明','フメイ'),
   (1,'北海道','ホッカイドウ'),

@@ -13,7 +13,7 @@ type OfficialEvent struct {
 	EndedAt     time.Time
 	DeckCount   string
 	Type        uint8
-	CSPFlg      uint8
+	CSPFlg      bool
 	League      uint16
 	LeagueName  string
 	Regulation  string

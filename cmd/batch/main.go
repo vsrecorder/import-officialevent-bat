@@ -45,13 +45,13 @@ func main() {
 	dbPort := os.Getenv("DB_PORT")
 	dbName := os.Getenv("DB_NAME")
 
-	db, err := infrastructures.NewMySQL(userName, password, dbHostname, dbPort, dbName)
+	db, err := infrastructures.NewPostgres(userName, password, dbHostname, dbPort, dbName)
 	if err != nil {
 		log.Fatalf("failed to connect database: %v", err)
 	}
 
 	// 公式イベントをDBに登録する
-	for id := 0; id <= 505550; id++ {
+	for id := 0; id <= 510000; id++ {
 		// 公式イベントの詳細情報の取得
 		res, err := http.Get(fmt.Sprintf("https://players.pokemon-card.com/event_detail_search?event_holding_id=%d", id))
 		if err != nil {
