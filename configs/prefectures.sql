@@ -1,3 +1,5 @@
+# mysql
+
 CREATE TABLE prefectures (
     id        TINYINT(2) UNSIGNED NOT NULL PRIMARY KEY,
     name      VARCHAR(255) DEFAULT NULL,
@@ -5,6 +7,8 @@ CREATE TABLE prefectures (
 );
 
 
+
+# postgres
 
 CREATE TABLE prefectures (
     id        SMALLINT NOT NULL PRIMARY KEY,

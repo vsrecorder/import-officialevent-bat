@@ -51,7 +51,7 @@ func main() {
 	}
 
 	// 公式イベントをDBに登録する
-	for id := 0; id <= 510000; id++ {
+	for id := 531035; id <= 550000; id++ {
 		// 公式イベントの詳細情報の取得
 		res, err := http.Get(fmt.Sprintf("https://players.pokemon-card.com/event_detail_search?event_holding_id=%d", id))
 		if err != nil {

@@ -1,3 +1,5 @@
+# mysql
+
 CREATE TABLE shops (
     id                            INT UNSIGNED NOT NULL PRIMARY KEY,
     name                          VARCHAR(255) NOT NULL,
@@ -15,6 +17,8 @@ CREATE TABLE shops (
 
 
 
+# postgres
+
 CREATE TABLE shops (
     id                            INT NOT NULL PRIMARY KEY,
     name                          VARCHAR(255) NOT NULL,
@@ -27,7 +31,7 @@ CREATE TABLE shops (
     business_hours                VARCHAR(255) DEFAULT NULL,
     url                           VARCHAR(255) DEFAULT NULL,
     geo_coding                    VARCHAR(63) DEFAULT NULL,
-    FOREIGN KEY (prefecture_id) REFERENCES prefectures (id)
+    FOREIGN KEY (prefecture_id)   REFERENCES prefectures (id)
 );
 
 

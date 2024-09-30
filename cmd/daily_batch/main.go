@@ -101,7 +101,7 @@ func main() {
 	dbPort := os.Getenv("DB_PORT")
 	dbName := os.Getenv("DB_NAME")
 
-	db, err := infrastructures.NewMySQL(userName, password, dbHostname, dbPort, dbName)
+	db, err := infrastructures.NewPostgres(userName, password, dbHostname, dbPort, dbName)
 	if err != nil {
 		log.Fatalf("failed to connect database: %v", err)
 	}

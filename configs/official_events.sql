@@ -1,3 +1,5 @@
+# mysql
+
 CREATE TABLE official_events (
     id                      INT UNSIGNED NOT NULL PRIMARY KEY,
     title                   VARCHAR(255) NOT NULL,
@@ -23,8 +25,10 @@ CREATE TABLE official_events (
 
 
 
+# postgres
+
 CREATE TABLE official_events (
-    id                      INT  NOT NULL PRIMARY KEY,
+    id                      INT NOT NULL PRIMARY KEY,
     title                   VARCHAR(255) NOT NULL,
     address                 VARCHAR(255) NOT NULL,
     venue                   VARCHAR(255) DEFAULT NULL, 
