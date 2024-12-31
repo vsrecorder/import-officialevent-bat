@@ -47,5 +47,5 @@ CREATE TABLE official_events (
     attr_id                 INT DEFAULT NULL,
     shop_id                 INT  DEFAULT NULL,
     shop_name               VARCHAR(255) DEFAULT NULL,
-    FOREIGN KEY (shop_id) REFERENCES shops (id)
+    FOREIGN KEY (shop_id)   REFERENCES shops (id)
 );
