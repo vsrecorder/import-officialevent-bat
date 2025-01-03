@@ -51,7 +51,7 @@ func main() {
 	}
 
 	// 公式イベントをDBに登録する
-	for id := 600000; id <= 620000; id++ {
+	for id := 0; id <= 620000; id++ {
 		// 公式イベントの詳細情報の取得
 		res, err := http.Get(fmt.Sprintf("https://players.pokemon-card.com/event_detail_search?event_holding_id=%d", id))
 		if err != nil {
@@ -76,66 +76,63 @@ func main() {
 
 		fmt.Println("event_holding_id:", eventDetail.Id)
 
-		// ショップが既にDBに存在するか確認
-		// ショップがDBに存在しない場合、DBに登録する
+		// shopデータをDBに登録
 		{
-			if result := db.Where(&models.Shop{Id: eventDetail.ShopId}).First(&models.Shop{}); errors.Is(result.Error, gorm.ErrRecordNotFound) {
-				fmt.Println("shop_id:", eventDetail.ShopId)
+			fmt.Println("shop_id:", eventDetail.ShopId)
 
-				// ショップ情報の取得
-				// ↓の返り値のshopIdとtermが数値だったり、文字列だったりしているから気をつける
-				now := time.Now()
+			now := time.Now()
 
-				res, err := http.Get(fmt.Sprintf("https://players.pokemon-card.com/shop?shop_id=%d&targetMonth=%s", eventDetail.ShopId, fmt.Sprintf("%d%02d", now.Year(), now.Month())))
-				if err != nil {
-					panic(err)
-				}
+			// shopデータの取得
+			// ↓の返り値のshopIdとtermが数値だったり、文字列だったりしているから気をつける
+			res, err := http.Get(fmt.Sprintf("https://players.pokemon-card.com/shop?shop_id=%d&targetMonth=%s", eventDetail.ShopId, fmt.Sprintf("%d%02d", now.Year(), now.Month())))
+			if err != nil {
+				panic(err)
+			}
 
-				defer res.Body.Close()
-				body, err := io.ReadAll(res.Body)
-				if err != nil {
-					panic(err)
-				}
+			defer res.Body.Close()
+			body, err := io.ReadAll(res.Body)
+			if err != nil {
+				panic(err)
+			}
 
-				var shopSearch models.ShopSearch
-				if err := json.Unmarshal(body, &shopSearch); err != nil {
-					panic(err)
-				}
+			var shopSearch models.ShopSearch
+			if err := json.Unmarshal(body, &shopSearch); err != nil {
+				panic(err)
+			}
 
-				// ショップの県名を取得
-				var pref models.Prefectures
-				db.Where("name = ?", shopSearch.Shop.PrefectureName).First(&pref)
+			// shopの県名を取得
+			var pref models.Prefectures
+			db.Where("name = ?", shopSearch.Shop.PrefectureName).First(&pref)
 
-				{
-					var shop daos.Shop
+			{
+				var shop daos.Shop
 
-					shop.Id = eventDetail.ShopId
-					shop.Name = shopSearch.Shop.Name
-					shop.ZipCode = shopSearch.Shop.ZipCode
-					shop.PrefectureId = pref.Id
-					shop.Address = shopSearch.Shop.Address
-					shop.Tel = shopSearch.Shop.Tel
-					shop.Access = shopSearch.Shop.Access
-					shop.BusinessHours = shopSearch.Shop.BusinessHours
-					shop.Url = shopSearch.Shop.Url
-					shop.GeoCoding = shopSearch.Shop.GeoCoding
+				shop.Id = eventDetail.ShopId
+				shop.Name = shopSearch.Shop.Name
+				shop.ZipCode = shopSearch.Shop.ZipCode
+				shop.PrefectureId = pref.Id
+				shop.Address = shopSearch.Shop.Address
+				shop.Tel = shopSearch.Shop.Tel
+				shop.Access = shopSearch.Shop.Access
+				shop.BusinessHours = shopSearch.Shop.BusinessHours
+				shop.Url = shopSearch.Shop.Url
+				shop.GeoCoding = shopSearch.Shop.GeoCoding
 
-					// 返り値のshopIdとtermが数値だったり、文字列だったりしているから処理する
-					var shopTermStringSearch models.ShopTermStringSearch
-					if err := json.Unmarshal(body, &shopTermStringSearch); err != nil {
-						var shopTermUintSearch models.ShopTermUintSearch
-						if err := json.Unmarshal(body, &shopTermUintSearch); err != nil {
-							panic(err)
-						} else {
-							shop.Term = shopTermUintSearch.ShopTermUint.Term
-						}
+				// 返り値のshopIdとtermが数値だったり、文字列だったりしているから処理する
+				var shopTermStringSearch models.ShopTermStringSearch
+				if err := json.Unmarshal(body, &shopTermStringSearch); err != nil {
+					var shopTermUintSearch models.ShopTermUintSearch
+					if err := json.Unmarshal(body, &shopTermUintSearch); err != nil {
+						panic(err)
 					} else {
-						i, _ := strconv.Atoi(shopTermStringSearch.ShopTermString.Term)
-						shop.Term = uint(i)
+						shop.Term = shopTermUintSearch.ShopTermUint.Term
 					}
-
-					db.Create(&shop)
+				} else {
+					i, _ := strconv.Atoi(shopTermStringSearch.ShopTermString.Term)
+					shop.Term = uint(i)
 				}
+
+				db.Save(&shop)
 			}
 		}
 
