@@ -19,14 +19,21 @@ import (
 )
 
 // 公式イベントの数を取得
-func getEventCount(t time.Time) (uint16, error) {
-	year := uint16(t.Year())
-	month := uint8(t.Month())
-	day := uint8(t.Day())
+func getEventCount(startDate time.Time, endDate time.Time) (uint16, error) {
+	startDateYear := uint16(startDate.Year())
+	startDateMonth := uint8(startDate.Month())
+	startDateDay := uint8(startDate.Day())
+
+	endDateYear := uint16(endDate.Year())
+	endDateMonth := uint8(endDate.Month())
+	endDateDay := uint8(endDate.Day())
 
 	var eventCount uint16
 
-	res, err := http.Get(fmt.Sprintf("https://players.pokemon-card.com/event_search/count?start_date=%d/%02d/%02d&end_date=%d/%02d/%02d", year, month, day, year, month, day))
+	res, err := http.Get(
+		fmt.Sprintf("https://players.pokemon-card.com/event_search/count?start_date=%d/%02d/%02d&end_date=%d/%02d/%02d",
+			startDateYear, startDateMonth, startDateDay, endDateYear, endDateMonth, endDateDay),
+	)
 	if err != nil {
 		return 0, err
 	}
@@ -47,16 +54,30 @@ func getEventCount(t time.Time) (uint16, error) {
 }
 
 // 公式イベントデータを取得
-func getEvent(t time.Time) ([]models.Event, error) {
-	year := uint16(t.Year())
-	month := uint8(t.Month())
-	day := uint8(t.Day())
-	eventCount, err := getEventCount(t)
+func getEvent(startDate time.Time) ([]models.Event, error) {
+	startDateYear := uint16(startDate.Year())
+	startDateMonth := uint8(startDate.Month())
+	startDateDay := uint8(startDate.Day())
+
+	endDate := startDate.AddDate(0, 0, 2)
+	endDateYear := uint16(endDate.Year())
+	endDateMonth := uint8(endDate.Month())
+	endDateDay := uint8(endDate.Day())
+
+	eventCount, err := getEventCount(startDate, endDate)
+
+	fmt.Println("startDate:", startDate)
+	fmt.Println("endDate:", endDate)
+	fmt.Println("eventCount:", eventCount)
+
 	if err != nil {
 		return nil, err
 	}
 
-	res, err := http.Get(fmt.Sprintf("https://players.pokemon-card.com/event_search?start_date=%d/%02d/%02d&end_date=%d/%02d/%02d&limit=%d", year, month, day, year, month, day, eventCount))
+	res, err := http.Get(fmt.Sprintf(
+		"https://players.pokemon-card.com/event_search?start_date=%d/%02d/%02d&end_date=%d/%02d/%02d&limit=%d",
+		startDateYear, startDateMonth, startDateDay, endDateYear, endDateMonth, endDateDay, eventCount),
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -114,16 +135,15 @@ func main() {
 	}
 
 	for _, event := range events {
-		// ショップが既にDBに存在するか確認
-		// ショップがDBに存在しない場合、DBに登録する
-		if result := db.Where(&models.Shop{Id: event.ShopId}).First(&models.Shop{}); errors.Is(result.Error, gorm.ErrRecordNotFound) {
-
-			// ショップ情報の取得
+		// shopデータをDBに登録
+		{
+			// shopデータの取得
 			// ↓の返り値のshopIdとtermが数値だったり、文字列だったりしているから気をつける
 			res, err := http.Get(fmt.Sprintf("https://players.pokemon-card.com/shop?shop_id=%d&targetMonth=%s", event.ShopId, event.EventDateParms))
 			if err != nil {
 				panic(err)
 			}
+
 			defer res.Body.Close()
 			body, err := io.ReadAll(res.Body)
 			if err != nil {
@@ -135,6 +155,7 @@ func main() {
 				panic(err)
 			}
 
+			// shopの県名を取得
 			var pref models.Prefectures
 			db.Where("name = ?", shopSearch.Shop.PrefectureName).First(&pref)
 
@@ -166,7 +187,7 @@ func main() {
 					shop.Term = uint(i)
 				}
 
-				db.Create(&shop)
+				db.Save(&shop)
 			}
 		}
 
@@ -188,7 +209,10 @@ func main() {
 				panic(err)
 			}
 			eventDetail := eventDetailSearch.EventDetail
-			fmt.Println("event_holding_id:", eventDetail.Id)
+
+			if eventDetail.Id == 0 {
+				continue
+			}
 
 			var officialEvent daos.OfficialEvent
 			officialEvent.Id = eventDetail.Id
