@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -65,12 +66,39 @@ func getEvent(startDate time.Time) ([]models.Event, error) {
 	endDateDay := uint8(endDate.Day())
 
 	eventCount, err := getEventCount(startDate, endDate)
+	if err != nil {
+		fmt.Print(err)
+		return nil, err
+	}
 
-	fmt.Println("startDate:", startDate)
-	fmt.Println("endDate:", endDate)
-	fmt.Println("eventCount:", eventCount)
+	if err := godotenv.Load(); err != nil {
+		panic("Error loading .env file")
+	}
+
+	slackWehhookURL := os.Getenv("SLACK_WEBHOOK_URL")
+	text := fmt.Sprintf("startDate: %d/%d/%d\nendDate: %d/%d/%d\neventCount: %d",
+		startDate.Year(), startDate.Month(), startDate.Day(),
+		endDate.Year(), endDate.Month(), endDate.Day(),
+		eventCount,
+	)
+	jsonStr := `{"text":"` + text + `"}`
+
+	req, err := http.NewRequest(
+		"POST",
+		slackWehhookURL,
+		bytes.NewBuffer([]byte(jsonStr)),
+	)
 
 	if err != nil {
+		fmt.Print(err)
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	if _, err := client.Do(req); err != nil {
+		fmt.Print(err)
 		return nil, err
 	}
 
