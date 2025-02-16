@@ -55,12 +55,13 @@ func getEventCount(startDate time.Time, endDate time.Time) (uint16, error) {
 }
 
 // 公式イベントデータを取得
-func getEvent(startDate time.Time) ([]models.Event, error) {
+func getEvent(date time.Time) ([]models.Event, error) {
+	startDate := date.AddDate(0, 0, -2)
 	startDateYear := uint16(startDate.Year())
 	startDateMonth := uint8(startDate.Month())
 	startDateDay := uint8(startDate.Day())
 
-	endDate := startDate.AddDate(0, 0, 2)
+	endDate := date.AddDate(0, 0, 2)
 	endDateYear := uint16(endDate.Year())
 	endDateMonth := uint8(endDate.Month())
 	endDateDay := uint8(endDate.Day())
@@ -185,37 +186,41 @@ func main() {
 
 			// shopの県名を取得
 			var pref models.Prefectures
-			db.Where("name = ?", shopSearch.Shop.PrefectureName).First(&pref)
+			if (shopSearch.Shop.PrefectureName != "") {
+				db.Where("name = ?", shopSearch.Shop.PrefectureName).First(&pref)
+			}
 
 			{
 				var shop daos.Shop
 
-				shop.Id = event.ShopId
-				shop.Name = shopSearch.Shop.Name
-				shop.ZipCode = shopSearch.Shop.ZipCode
-				shop.PrefectureId = pref.Id
-				shop.Address = shopSearch.Shop.Address
-				shop.Tel = shopSearch.Shop.Tel
-				shop.Access = shopSearch.Shop.Access
-				shop.BusinessHours = shopSearch.Shop.BusinessHours
-				shop.Url = shopSearch.Shop.Url
-				shop.GeoCoding = shopSearch.Shop.GeoCoding
+				if (event.ShopId != 0) {
+					shop.Id = event.ShopId
+					shop.Name = shopSearch.Shop.Name
+					shop.ZipCode = shopSearch.Shop.ZipCode
+					shop.PrefectureId = pref.Id
+					shop.Address = shopSearch.Shop.Address
+					shop.Tel = shopSearch.Shop.Tel
+					shop.Access = shopSearch.Shop.Access
+					shop.BusinessHours = shopSearch.Shop.BusinessHours
+					shop.Url = shopSearch.Shop.Url
+					shop.GeoCoding = shopSearch.Shop.GeoCoding
 
-				// 返り値のshopIdとtermが数値だったり、文字列だったりしているから処理する
-				var shopTermStringSearch models.ShopTermStringSearch
-				if err := json.Unmarshal(body, &shopTermStringSearch); err != nil {
-					var shopTermUintSearch models.ShopTermUintSearch
-					if err := json.Unmarshal(body, &shopTermUintSearch); err != nil {
-						panic(err)
+					// 返り値のshopIdとtermが数値だったり、文字列だったりしているから処理する
+					var shopTermStringSearch models.ShopTermStringSearch
+					if err := json.Unmarshal(body, &shopTermStringSearch); err != nil {
+						var shopTermUintSearch models.ShopTermUintSearch
+						if err := json.Unmarshal(body, &shopTermUintSearch); err != nil {
+							panic(err)
+						} else {
+							shop.Term = shopTermUintSearch.ShopTermUint.Term
+						}
 					} else {
-						shop.Term = shopTermUintSearch.ShopTermUint.Term
+						i, _ := strconv.Atoi(shopTermStringSearch.ShopTermString.Term)
+						shop.Term = uint(i)
 					}
-				} else {
-					i, _ := strconv.Atoi(shopTermStringSearch.ShopTermString.Term)
-					shop.Term = uint(i)
-				}
 
-				db.Save(&shop)
+					db.Save(&shop)
+				}
 			}
 		}
 
@@ -237,6 +242,9 @@ func main() {
 				panic(err)
 			}
 			eventDetail := eventDetailSearch.EventDetail
+
+			fmt.Println("event_holding_id:", eventDetail.Id)
+			fmt.Println("shop_id:", eventDetail.ShopId)
 
 			if eventDetail.Id == 0 {
 				continue

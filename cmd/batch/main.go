@@ -51,7 +51,7 @@ func main() {
 	}
 
 	// 公式イベントをDBに登録する
-	for id := 0; id <= 620000; id++ {
+	for id := 630000; id <= 650000; id++ {
 		// 公式イベントの詳細情報の取得
 		res, err := http.Get(fmt.Sprintf("https://players.pokemon-card.com/event_detail_search?event_holding_id=%d", id))
 		if err != nil {
@@ -102,37 +102,41 @@ func main() {
 
 			// shopの県名を取得
 			var pref models.Prefectures
-			db.Where("name = ?", shopSearch.Shop.PrefectureName).First(&pref)
+			if (shopSearch.Shop.PrefectureName != "") {
+				db.Where("name = ?", shopSearch.Shop.PrefectureName).First(&pref)
+			}
 
 			{
 				var shop daos.Shop
 
-				shop.Id = eventDetail.ShopId
-				shop.Name = shopSearch.Shop.Name
-				shop.ZipCode = shopSearch.Shop.ZipCode
-				shop.PrefectureId = pref.Id
-				shop.Address = shopSearch.Shop.Address
-				shop.Tel = shopSearch.Shop.Tel
-				shop.Access = shopSearch.Shop.Access
-				shop.BusinessHours = shopSearch.Shop.BusinessHours
-				shop.Url = shopSearch.Shop.Url
-				shop.GeoCoding = shopSearch.Shop.GeoCoding
+				if (eventDetail.ShopId != 0) {
+					shop.Id = eventDetail.ShopId
+					shop.Name = shopSearch.Shop.Name
+					shop.ZipCode = shopSearch.Shop.ZipCode
+					shop.PrefectureId = pref.Id
+					shop.Address = shopSearch.Shop.Address
+					shop.Tel = shopSearch.Shop.Tel
+					shop.Access = shopSearch.Shop.Access
+					shop.BusinessHours = shopSearch.Shop.BusinessHours
+					shop.Url = shopSearch.Shop.Url
+					shop.GeoCoding = shopSearch.Shop.GeoCoding
 
-				// 返り値のshopIdとtermが数値だったり、文字列だったりしているから処理する
-				var shopTermStringSearch models.ShopTermStringSearch
-				if err := json.Unmarshal(body, &shopTermStringSearch); err != nil {
-					var shopTermUintSearch models.ShopTermUintSearch
-					if err := json.Unmarshal(body, &shopTermUintSearch); err != nil {
-						panic(err)
+					// 返り値のshopIdとtermが数値だったり、文字列だったりしているから処理する
+					var shopTermStringSearch models.ShopTermStringSearch
+					if err := json.Unmarshal(body, &shopTermStringSearch); err != nil {
+						var shopTermUintSearch models.ShopTermUintSearch
+						if err := json.Unmarshal(body, &shopTermUintSearch); err != nil {
+							panic(err)
+						} else {
+							shop.Term = shopTermUintSearch.ShopTermUint.Term
+						}
 					} else {
-						shop.Term = shopTermUintSearch.ShopTermUint.Term
+						i, _ := strconv.Atoi(shopTermStringSearch.ShopTermString.Term)
+						shop.Term = uint(i)
 					}
-				} else {
-					i, _ := strconv.Atoi(shopTermStringSearch.ShopTermString.Term)
-					shop.Term = uint(i)
-				}
 
-				db.Save(&shop)
+					db.Save(&shop)
+				}
 			}
 		}
 
@@ -196,5 +200,4 @@ func main() {
 			db.Create(&officialEvent)
 		}
 	}
-
 }
