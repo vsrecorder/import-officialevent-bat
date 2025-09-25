@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -15,7 +14,6 @@ import (
 	"github.com/vsrecorder/import-officialevent-bat/infrastructures"
 	"github.com/vsrecorder/import-officialevent-bat/internal/models"
 	daos "github.com/vsrecorder/import-officialevent-bat/pkg/models"
-	"gorm.io/gorm"
 )
 
 func stringToTime(str string) time.Time {
@@ -50,9 +48,8 @@ func main() {
 		log.Fatalf("failed to connect database: %v", err)
 	}
 
-	// 公式イベントをDBに登録する
-	for id := 630000; id <= 650000; id++ {
-		// 公式イベントの詳細情報の取得
+	// 公式イベントをDBに登録するfor id :=V0; id <= 780000; id++ {
+	for id := 824263; id <= 830000; id++ {
 		res, err := http.Get(fmt.Sprintf("https://players.pokemon-card.com/event_detail_search?event_holding_id=%d", id))
 		if err != nil {
 			panic(err)
@@ -196,8 +193,6 @@ func main() {
 		officialEvent.ShopId = eventDetail.ShopId
 		officialEvent.ShopName = eventDetail.ShopName
 
-		if result := db.Where(&models.OfficialEvent{Id: officialEvent.Id}).First(&models.OfficialEvent{}); errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			db.Create(&officialEvent)
-		}
+		db.Save(&officialEvent)
 	}
 }

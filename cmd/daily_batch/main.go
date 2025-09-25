@@ -3,10 +3,8 @@ package main
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"strconv"
@@ -16,7 +14,6 @@ import (
 	"github.com/vsrecorder/import-officialevent-bat/infrastructures"
 	"github.com/vsrecorder/import-officialevent-bat/internal/models"
 	daos "github.com/vsrecorder/import-officialevent-bat/pkg/models"
-	"gorm.io/gorm"
 )
 
 // 公式イベントの数を取得
@@ -51,17 +48,17 @@ func getEventCount(startDate time.Time, endDate time.Time) (uint16, error) {
 
 	eventCount = uint16(eventCountSearch.Count)
 
-	return eventCount, err
+	return eventCount, nil
 }
 
 // 公式イベントデータを取得
 func getEvent(date time.Time) ([]models.Event, error) {
-	startDate := date.AddDate(0, 0, -2)
+	startDate := date.AddDate(0, 0, 0)
 	startDateYear := uint16(startDate.Year())
 	startDateMonth := uint8(startDate.Month())
 	startDateDay := uint8(startDate.Day())
 
-	endDate := date.AddDate(0, 0, 2)
+	endDate := date.AddDate(0, 0, 3)
 	endDateYear := uint16(endDate.Year())
 	endDateMonth := uint8(endDate.Month())
 	endDateDay := uint8(endDate.Day())
@@ -103,6 +100,7 @@ func getEvent(date time.Time) ([]models.Event, error) {
 		return nil, err
 	}
 
+	// eventCountが5000付近だとエラー("Internal server error")が出る
 	res, err := http.Get(fmt.Sprintf(
 		"https://players.pokemon-card.com/event_search?start_date=%d/%02d/%02d&end_date=%d/%02d/%02d&limit=%d",
 		startDateYear, startDateMonth, startDateDay, endDateYear, endDateMonth, endDateDay, eventCount),
@@ -111,6 +109,7 @@ func getEvent(date time.Time) ([]models.Event, error) {
 		return nil, err
 	}
 	defer res.Body.Close()
+
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return nil, err
@@ -153,7 +152,7 @@ func main() {
 
 	db, err := infrastructures.NewPostgres(userName, password, dbHostname, dbPort, dbName)
 	if err != nil {
-		log.Fatalf("failed to connect database: %v", err)
+		fmt.Printf("failed to connect database: %v", err)
 	}
 
 	// 公式イベントデータをWebから取得
@@ -306,9 +305,7 @@ func main() {
 			officialEvent.ShopId = eventDetail.ShopId
 			officialEvent.ShopName = eventDetail.ShopName
 
-			if result := db.Where(&models.OfficialEvent{Id: officialEvent.Id}).First(&models.OfficialEvent{}); errors.Is(result.Error, gorm.ErrRecordNotFound) {
-				db.Create(&officialEvent)
-			}
+			db.Save(&officialEvent)
 		}
 	}
 
