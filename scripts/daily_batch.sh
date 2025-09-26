@@ -1,10 +1,11 @@
 #!/bin/bash
 
-source /home/ubuntu/import-officialevent-bat/.env
+source /home/ubuntu/vsrecorder/import-officialevent-bat/.env
 
 curl -X POST -H 'Content-type: application/json' --data '{"text":"日次バッチを開始します。"}' ${SLACK_WEBHOOK_URL}
-cd /home/ubuntu/import-officialevent-bat
-go run cmd/daily_batch/main.go > log/import-officialevent-bat.`date +%Y%m%d`
+
+./bin/daily_batch
+
 curl -X POST -H 'Content-type: application/json' --data '{"text":"日次バッチが終了しました。"}' ${SLACK_WEBHOOK_URL}
 
 exit 0

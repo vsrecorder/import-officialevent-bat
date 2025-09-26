@@ -58,7 +58,7 @@ func getEvent(date time.Time) ([]models.Event, error) {
 	startDateMonth := uint8(startDate.Month())
 	startDateDay := uint8(startDate.Day())
 
-	endDate := date.AddDate(0, 0, 3)
+	endDate := date.AddDate(0, 0, 2)
 	endDateYear := uint16(endDate.Year())
 	endDateMonth := uint8(endDate.Month())
 	endDateDay := uint8(endDate.Day())
@@ -185,14 +185,14 @@ func main() {
 
 			// shopの県名を取得
 			var pref models.Prefectures
-			if (shopSearch.Shop.PrefectureName != "") {
+			if shopSearch.Shop.PrefectureName != "" {
 				db.Where("name = ?", shopSearch.Shop.PrefectureName).First(&pref)
 			}
 
 			{
 				var shop daos.Shop
 
-				if (event.ShopId != 0) {
+				if event.ShopId != 0 {
 					shop.Id = event.ShopId
 					shop.Name = shopSearch.Shop.Name
 					shop.ZipCode = shopSearch.Shop.ZipCode
@@ -241,9 +241,6 @@ func main() {
 				panic(err)
 			}
 			eventDetail := eventDetailSearch.EventDetail
-
-			fmt.Println("event_holding_id:", eventDetail.Id)
-			fmt.Println("shop_id:", eventDetail.ShopId)
 
 			if eventDetail.Id == 0 {
 				continue

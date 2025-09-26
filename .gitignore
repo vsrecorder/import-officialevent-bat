@@ -1,1 +1,3 @@
 .env
+bin/batch
+bin/daily_batch
