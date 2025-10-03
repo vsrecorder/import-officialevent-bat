@@ -48,13 +48,18 @@ func main() {
 		log.Fatalf("failed to connect database: %v", err)
 	}
 
-	// 公式イベントをDBに登録するfor id :=V0; id <= 780000; id++ {
-	for id := 824263; id <= 830000; id++ {
+	// 公式イベントをDBに登録する
+	for id := 1; id <= 850000; id++ {
 		res, err := http.Get(fmt.Sprintf("https://players.pokemon-card.com/event_detail_search?event_holding_id=%d", id))
 		if err != nil {
 			panic(err)
 		}
 		defer res.Body.Close()
+
+		if res.StatusCode != http.StatusOK {
+			db.Delete(&daos.OfficialEvent{}, id)
+		}
+
 		body, err := io.ReadAll(res.Body)
 		if err != nil {
 			panic(err)
@@ -99,14 +104,14 @@ func main() {
 
 			// shopの県名を取得
 			var pref models.Prefectures
-			if (shopSearch.Shop.PrefectureName != "") {
+			if shopSearch.Shop.PrefectureName != "" {
 				db.Where("name = ?", shopSearch.Shop.PrefectureName).First(&pref)
 			}
 
 			{
 				var shop daos.Shop
 
-				if (eventDetail.ShopId != 0) {
+				if eventDetail.ShopId != 0 {
 					shop.Id = eventDetail.ShopId
 					shop.Name = shopSearch.Shop.Name
 					shop.ZipCode = shopSearch.Shop.ZipCode

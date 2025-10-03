@@ -231,6 +231,11 @@ func main() {
 				panic(err)
 			}
 			defer res.Body.Close()
+
+			if res.StatusCode != http.StatusOK {
+				db.Delete(&daos.OfficialEvent{}, event.EventHoldingId)
+			}
+
 			body, err := io.ReadAll(res.Body)
 			if err != nil {
 				panic(err)
